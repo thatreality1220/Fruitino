@@ -2,10 +2,11 @@ import torch
 import torch.nn as nn
 from torchvision import transforms, datasets
 from torch.utils.data import DataLoader
+from private_values import training_root, testing_root
 
-
-train_dir = "/Users/daniel/.cache/kagglehub/datasets/moltean/fruits/versions/100/fruits-360_100X100/fruits-360/Training"
-test_dir = "/Users/daniel/.cache/kagglehub/datasets/moltean/fruits/versions/100/fruits-360_100X100/fruits-360/Test"
+train_dir = training_root
+test_dir = testing_root 
+# enter the filepath to the data from fruits-360
 
 train_transform = transforms.Compose([
     transforms.RandomAffine(degrees=0, translate=(0.2, 0.1)),
@@ -22,16 +23,10 @@ test_transform = transforms.Compose([
 # downloading fruits datasets
 train_ds = datasets.ImageFolder(root=train_dir, transform=train_transform)
 test_ds = datasets.ImageFolder(root=test_dir, transform=test_transform)
-train_loader = DataLoader(train_ds, batch_size=32, shuffle=True)
-test_loader = DataLoader(test_ds, batch_size=32, shuffle=False)
+train_loader = DataLoader(train_ds, batch_size=64, shuffle=True, num_workers=0)
+test_loader = DataLoader(test_ds, batch_size=64, shuffle=False, num_workers=0)
 
-device = 0
-if torch.mps.is_available:
-    device = torch.device("mps")
-elif torch.cuda.is_available:
-    device = torch.device("cuda")
-else:
-    device = torch.device("cpu")
+device = torch.device("mps")
 
 model = nn.Sequential(
     nn.Conv2d(3, 16, kernel_size=3, padding=1),
@@ -53,14 +48,15 @@ model = nn.Sequential(
     nn.Linear(9216, 512),
     nn.ReLU(),
     nn.Dropout(0.5),
-    nn.Linear(512, 260)
+    nn.Linear(512, 131)
 ).to(device)
 
 # training
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 criterion = nn.CrossEntropyLoss()
 
-for epoch in range(10):
+print("Training Starting...")
+for epoch in range(15):
     model.train()
 
     for images, labels in train_loader:
