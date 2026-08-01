@@ -4,6 +4,7 @@ from torchvision import transforms, datasets
 from torch.utils.data import DataLoader
 from private_values import training_root, testing_root
 
+
 train_dir = training_root
 test_dir = testing_root 
 # enter the filepath to the data from fruits-360
@@ -26,7 +27,12 @@ test_ds = datasets.ImageFolder(root=test_dir, transform=test_transform)
 train_loader = DataLoader(train_ds, batch_size=64, shuffle=True, num_workers=0)
 test_loader = DataLoader(test_ds, batch_size=64, shuffle=False, num_workers=0)
 
-device = torch.device("mps")
+if torch.mps.is_available:
+    device = torch.device("mps")
+elif torch.cuda.is_available:
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
 
 model = nn.Sequential(
     nn.Conv2d(3, 16, kernel_size=3, padding=1),
@@ -80,7 +86,7 @@ for epoch in range(15):
             val_loss = criterion(outputs, labels)
             total_val_loss += val_loss.item() * images.size(0)
 
-        average_val_loss = total_val_loss / len(train_loader.dataset)
+        average_val_loss = total_val_loss / len(test_loader.dataset)
 
     print(f"Epoch: {epoch + 1}, Loss: {loss}, Val_loss: {average_val_loss}")
 
